@@ -1,5 +1,7 @@
 # Retroactive Commit History
 
+Stop committing 'WIP' at 2am. Ship clean history.
+
 An AI agent skill that splits batch changes into multiple smaller, meaningful commits with realistic dates and proper author attribution. Ensures changes are properly committed regardless of date, time, or timezone.
 
 **Compatible with:** Cursor, Claude Code, Codex, Windsurf, and other agents that support the [Agent Skills](https://agentskills.io/) format.
@@ -11,7 +13,7 @@ This skill guides AI agents to:
 - Turn a batch of uncommitted changes into a logical sequence of commits
 - Assign realistic or custom dates (past, present, or future) to commits
 - Use proper author/committer attribution for contribution graphs
-- Prevent Cursor from injecting `Co-authored-by: Cursor` into commit messages
+- Prevent Cursor or others from injecting `Co-authored-by: Cursor/Claude` into commit messages
 - Build commit history incrementally with coherent, buildable steps
 
 ## When to Use
@@ -84,6 +86,8 @@ git diff HEAD~N..HEAD
 ```
 
 ## Examples
+
+<img width="1020" height="908" alt="Screenshot 2026-03-09 at 12 09 20 AM" src="https://github.com/user-attachments/assets/33cbd368-d172-4485-80f9-a79a09fb2285" />
 
 See [examples.md](examples.md) for sample commit sequences:
 
