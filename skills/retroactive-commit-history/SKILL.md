@@ -81,5 +81,5 @@ For commits that add only part of a file:
 
 ## Additional Resources
 
-- For date formulas and env var reference, see [reference.md](reference.md)
-- For sample commit sequences, see [examples.md](examples.md)
+- For date formulas and env var reference, see [references/reference.md](references/reference.md)
+- For sample commit sequences, see [references/examples.md](references/examples.md)
