@@ -1,6 +1,6 @@
 # Skills
 
-Nitin's personal collection of agent skills — modular instructions that teach coding agents (Cursor, Claude Code, Codex, and others) how to perform specialized workflows.
+My personal collection of agent skills — modular instructions that I use almost daily and teach coding agents (Cursor, Claude Code, Codex, and others) how to perform specialized workflows.
 
 Each skill lives in its own folder under `skills/` with a `SKILL.md` entry point and optional reference files. Install one skill, several, or the whole collection.
 
