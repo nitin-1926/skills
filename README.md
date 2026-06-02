@@ -16,6 +16,16 @@ realistic dates and author attribution.
 - References: [`reference.md`](skills/retroactive-commit-history/references/reference.md)
 - Examples: [`examples.md`](skills/retroactive-commit-history/references/examples.md)
 
+### Productionize
+
+Understand any repo in any state, then carefully productionize it — remove AI
+slop, reshape toward the intended end state, and harden correctness, security,
+tests, config, and docs, all behind explicit approval gates.
+
+- Skill: [`productionize`](skills/productionize/SKILL.md)
+- Dimensions: [`dimensions.md`](skills/productionize/references/dimensions.md)
+- Interview: [`interview.md`](skills/productionize/references/interview.md)
+
 ## Installation
 
 List available skills:
@@ -59,6 +69,11 @@ skills/
     references/
       reference.md
       examples.md
+  productionize/
+    SKILL.md
+    references/
+      dimensions.md
+      interview.md
 ```
 
 ## Deprecated Install Path
