@@ -1,13 +1,16 @@
 # Skills
 
-Nitin's personal collection of [agent skills](https://skills.sh/) — modular instructions that teach coding agents (Cursor, Claude Code, Codex, and others) how to perform specialized workflows.
+Nitin's personal collection of agent skills — modular instructions that teach coding agents (Cursor, Claude Code, Codex, and others) how to perform specialized workflows.
 
 Each skill lives in its own folder under `skills/` with a `SKILL.md` entry point and optional reference files. Install one skill, several, or the whole collection.
+
+**Distribution:** install from this GitHub repo via `npx skills add nitin-1926/skills` (see [Installation](#installation)). Listing on [skills.sh](https://skills.sh/) is optional discoverability and may appear after installs — it is not required for the skills to work.
 
 ## Skills catalog
 
 | Skill                                                                      | What it does                                                                                                                                                                                                                                         | Invoke when you…                                                                                                         |
 | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| [`setup-devlog`](skills/setup-devlog/SKILL.md)                             | One-shot, idempotent setup of `DEVLOG.md` plus CLAUDE.md/AGENTS.md discipline so agents log decisions and tradeoffs in the same session as each change.                                                                                              | Want to "set up devlog", start tracking decisions, or init a maintainer journal in a project.                            |
 | [`productionize`](skills/productionize/SKILL.md)                           | Investigates any repo, interviews you on the intended end state, proposes a risk-ranked plan, then carefully removes slop, reshapes architecture, and hardens correctness, security, tests, config, and docs — with mandatory approval before edits. | Want to make a prototype production-ready, remove AI slop, clean up tech debt, or "productionize" a codebase.            |
 | [`retroactive-commit-history`](skills/retroactive-commit-history/SKILL.md) | Splits a batch of changes into smaller, meaningful commits with realistic dates and author attribution.                                                                                                                                              | Need to retrofit git history, backdate or future-date commits, or build a natural commit timeline from uncommitted work. |
 
@@ -50,7 +53,7 @@ npx skills add nitin-1926/skills --skill productionize -g
 npx skills add nitin-1926/skills --skill productionize -g -y
 ```
 
-Replace `productionize` with `retroactive-commit-history` or any other skill name from `--list`.
+Replace `productionize` with `setup-devlog`, `retroactive-commit-history`, or any other skill name from `--list`.
 
 ### Install all skills
 
@@ -128,13 +131,43 @@ After installation, agents discover skills from the `description` in each `SKILL
 
 ### Tips
 
-- Run skills **in the repo you want to change** (especially `productionize`).
+- Run skills **in the repo you want to change** (especially `productionize` and `setup-devlog`).
+- `setup-devlog` modifies the **target project** (creates `DEVLOG.md`, updates `.gitignore`, appends discipline to `CLAUDE.md`/`AGENTS.md`). Run it inside the project you want to journal, not inside this skills collection repo unless you intend to.
 - `productionize` is phased: investigate → interview → plan → **your approval** → execute. Do not expect it to rewrite the repo without confirming the plan.
 - `retroactive-commit-history` rewrites git history; avoid on shared branches without team agreement.
 
 ---
 
 ## Skill details
+
+### Setup devlog
+
+One-shot, idempotent setup of a project devlog (`DEVLOG.md`) plus agent discipline snippets so every substantive change gets a _why_-focused journal entry in the same session.
+
+**What it creates in the target repo:**
+
+- `DEVLOG.md` — append-only decision log (from template, with your purpose + baseline)
+- `.gitignore` entry — optional; default is local-only (gitignored)
+- `CLAUDE.md` / `AGENTS.md` — devlog discipline section (appended if files exist; never auto-creates)
+
+**Workflow:** resolve repo root → create or skip `DEVLOG.md` → gitignore vs committed → inject discipline snippets → summary.
+
+- Skill: [`skills/setup-devlog/SKILL.md`](skills/setup-devlog/SKILL.md)
+- Devlog template: [`references/devlog-template.md`](skills/setup-devlog/references/devlog-template.md)
+- CLAUDE.md snippet: [`references/claude-md-snippet.md`](skills/setup-devlog/references/claude-md-snippet.md)
+- AGENTS.md snippet: [`references/agents-md-snippet.md`](skills/setup-devlog/references/agents-md-snippet.md)
+- Entry examples: [`references/entry-examples.md`](skills/setup-devlog/references/entry-examples.md)
+- Non-interactive script: [`scripts/setup.sh`](skills/setup-devlog/scripts/setup.sh)
+
+```bash
+# Install, then run in the project you want to journal
+npx skills add nitin-1926/skills --skill setup-devlog -g -y
+# In target repo: "set up devlog" or attach @setup-devlog
+
+# Or scripted setup (from installed skill path)
+bash ~/.cursor/skills/setup-devlog/scripts/setup.sh --dry-run
+bash ~/.cursor/skills/setup-devlog/scripts/setup.sh --gitignored
+```
 
 ### Productionize
 
@@ -162,6 +195,15 @@ Split existing or new code into multiple smaller, meaningful commits with realis
 README.md
 LICENSE
 skills/
+  setup-devlog/
+    SKILL.md
+    references/
+      devlog-template.md
+      claude-md-snippet.md
+      agents-md-snippet.md
+      entry-examples.md
+    scripts/
+      setup.sh
   productionize/
     SKILL.md
     references/
