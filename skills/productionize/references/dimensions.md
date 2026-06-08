@@ -113,3 +113,21 @@ A **safe fix** is reversible, behavior-preserving, and local (e.g. removing a na
 
 **Safe fix**: correcting docs to match reality; documenting setup/run steps.
 **Needs approval**: adding or changing CI pipelines; introducing new tooling or workflows.
+
+---
+
+## 8. Architecture depth (deepening lens)
+
+Reasons about depth, not just debt. Full vocabulary and process in [deepening.md](deepening.md); use those terms exactly (module, interface, depth, seam, adapter, leverage, locality).
+
+**Investigate**: walk the code for friction — concepts that require bouncing between many small modules, modules whose interface is nearly as complex as their implementation (**shallow**), pure functions extracted for testability where the real bugs live in how they're called (no **locality**), and tightly-coupled modules leaking across their seams. Apply the **deletion test** to anything suspected shallow: would deleting it concentrate complexity (it earns its keep) or just move it (pass-through)?
+
+**Flag**:
+
+- Shallow modules / pass-throughs — interface nearly as complex as the implementation
+- Leaky seams — tightly-coupled modules whose internals bleed across the interface
+- Testability without locality — pure functions split out, but the bugs hide in the calling code
+- One concept smeared across many tiny modules, hurting AI-navigability
+
+**Safe fix**: none — deepening reshapes interfaces and almost always needs approval, and may contradict an ADR (surface only when friction warrants reopening it).
+**Needs approval**: collapse a pass-through into its caller (state the deletion-test result); deepen a shallow module behind a smaller interface; introduce a seam only when there are two real adapters; consolidate a smeared concept into one deep module.
