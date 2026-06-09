@@ -1,10 +1,10 @@
 # Productionize Interview
 
-Questions to ask the user in Phase 2 to pin down the intended end state. Rules:
+Questions to pin down the intended end state during the `audit` interview phase. Follow the same grilling discipline as the router ([router.md](router.md)):
 
-- Ask only what the Phase 1 investigation could not answer. Do not ask what you can verify in the repo.
-- Ask a few at a time, not all at once. Provide a recommended default for each.
-- Stop once you can state the intended end state in one or two sentences.
+- Ask only what recon ([recon.md](recon.md)) could not answer. Do not ask what you can verify in the repo — explore first.
+- **Ask one question at a time.** Give your recommended default, wait for the answer, then ask the next. Never batch the whole list into one message.
+- Stop the moment you can state the intended end state in one or two sentences.
 - The user's answers override your assumptions about what "production" means.
 
 ## End state & intent
