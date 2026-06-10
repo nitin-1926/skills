@@ -11,7 +11,7 @@ Each skill lives in its own folder under `skills/` with a `SKILL.md` entry point
 | Skill                                                                      | What it does                                                                                                                                                                                                                                         | Invoke when you…                                                                                                         |
 | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | [`setup-devlog`](skills/setup-devlog/SKILL.md)                             | One-shot, idempotent setup of `DEVLOG.md` plus CLAUDE.md/AGENTS.md discipline so agents log decisions and tradeoffs in the same session as each change.                                                                                              | Want to "set up devlog", start tracking decisions, or init a maintainer journal in a project.                            |
-| [`productionize`](skills/productionize/SKILL.md)                           | Investigates any repo, interviews you on the intended end state, proposes a risk-ranked plan, then carefully removes slop, reshapes architecture, and hardens correctness, security, tests, config, and docs — with mandatory approval before edits. | Want to make a prototype production-ready, remove AI slop, clean up tech debt, or "productionize" a codebase.            |
+| [`productionize`](skills/productionize/SKILL.md)                           | Master skill that routes to the right path (audit, architecture-deepen, plan, execute, reconcile), grilling you one question at a time when intent is unclear. Runs a vetted parallel audit, applies an architecture-deepening lens, writes self-contained executable plans, and closes the loop — with mandatory approval before edits. | Want to make a prototype production-ready, audit a repo, remove AI slop, clean up tech debt, deepen architecture, or "productionize" a codebase.            |
 | [`retroactive-commit-history`](skills/retroactive-commit-history/SKILL.md) | Splits a batch of changes into smaller, meaningful commits with realistic dates and author attribution.                                                                                                                                              | Need to retrofit git history, backdate or future-date commits, or build a natural commit timeline from uncommitted work. |
 
 ---
@@ -171,12 +171,26 @@ bash ~/.cursor/skills/setup-devlog/scripts/setup.sh --gitignored
 
 ### Productionize
 
-Understand any repo in any state, then carefully productionize it — remove AI slop, reshape toward the intended end state, and harden correctness, security, tests, config, and docs, all behind explicit approval gates.
+The master skill for moving any repo toward production. It first **decides its path** — and when intent is unclear it grills you one question at a time (the `grill-me` discipline) before doing anything.
 
-**Workflow**: Investigate → interview on end state → risk-ranked plan → approved execution in small batches.
+**Paths**:
+
+- `audit` (default) — recon → end-state interview → parallel fan-out across dimensions → vet every finding by re-reading the cited lines → leverage-ranked findings table → self-contained `plans/`. Focus filters: `quick`, `deep`, `branch`, `next`, or a single dimension (`security`, `perf`, `tests`, …).
+- `architecture` — find deepening opportunities (shallow → deep modules) using the deletion test and locality/leverage vocabulary, then grill the chosen design.
+- `plan <description>` — skip the audit and spec one already-decided change.
+- `execute <plan>` — dispatch a cheaper executor subagent in an isolated worktree, then review the diff like a tech lead.
+- `reconcile` — refresh the backlog: verify done, unblock, retire stale findings.
+
+Audit and plan paths never modify source; executors edit only in disposable worktrees and merging stays your call.
 
 - Skill: [`skills/productionize/SKILL.md`](skills/productionize/SKILL.md)
+- Path catalog + grilling decision tree: [`references/router.md`](skills/productionize/references/router.md)
+- Repo recon → verification gates: [`references/recon.md`](skills/productionize/references/recon.md)
+- Parallel audit, vetting, leverage ranking: [`references/audit.md`](skills/productionize/references/audit.md)
 - Dimension checklists: [`references/dimensions.md`](skills/productionize/references/dimensions.md)
+- Architecture-deepening lens: [`references/deepening.md`](skills/productionize/references/deepening.md)
+- Self-contained plan artifacts: [`references/plans.md`](skills/productionize/references/plans.md)
+- Execute + reconcile loops: [`references/execute.md`](skills/productionize/references/execute.md)
 - Interview questions: [`references/interview.md`](skills/productionize/references/interview.md)
 
 ### Retroactive commit history
@@ -207,7 +221,13 @@ skills/
   productionize/
     SKILL.md
     references/
+      router.md
+      recon.md
+      audit.md
       dimensions.md
+      deepening.md
+      plans.md
+      execute.md
       interview.md
   retroactive-commit-history/
     SKILL.md
