@@ -22,13 +22,13 @@ Before doing anything, determine which path the request wants. **If the path is 
 
 See [references/router.md](references/router.md) for the path catalog, trigger phrases, and the decision tree.
 
-| Path | When | Reference |
-| --- | --- | --- |
-| `audit` (default) | "productionize", "clean up", "what's wrong with this repo", "make production-ready" | [references/audit.md](references/audit.md) |
-| `architecture` | "deepen the architecture", "find refactors", "this is hard to test/navigate" | [references/deepening.md](references/deepening.md) |
-| `plan <description>` | a specific change is already chosen; skip the audit and spec it | [references/plans.md](references/plans.md) |
-| `execute <plan>` | run an existing plan and review the result | [references/execute.md](references/execute.md) |
-| `reconcile` | refresh the backlog: verify done, unblock, retire stale | [references/execute.md](references/execute.md) |
+| Path                 | When                                                                                | Reference                                          |
+| -------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `audit` (default)    | "productionize", "clean up", "what's wrong with this repo", "make production-ready" | [references/audit.md](references/audit.md)         |
+| `architecture`       | "deepen the architecture", "find refactors", "this is hard to test/navigate"        | [references/deepening.md](references/deepening.md) |
+| `plan <description>` | a specific change is already chosen; skip the audit and spec it                     | [references/plans.md](references/plans.md)         |
+| `execute <plan>`     | run an existing plan and review the result                                          | [references/execute.md](references/execute.md)     |
+| `reconcile`          | refresh the backlog: verify done, unblock, retire stale                             | [references/execute.md](references/execute.md)     |
 
 **Focus filters** narrow an `audit` (combine freely): `quick` (hotspots only), `deep` (every package, every category), `branch` (only what the current branch changes), `next` (feature/direction suggestions), or a single dimension — `security`, `perf`, `tests`, `bugs`, `debt`, `config`, `docs`, `arch`.
 
