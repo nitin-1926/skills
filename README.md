@@ -12,6 +12,7 @@ Each skill lives in its own folder under `skills/` with a `SKILL.md` entry point
 | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [`setup-devlog`](skills/setup-devlog/SKILL.md)                             | One-shot, idempotent setup of `DEVLOG.md` plus CLAUDE.md/AGENTS.md discipline so agents log decisions and tradeoffs in the same session as each change.                                                                                                                                                                                  | Want to "set up devlog", start tracking decisions, or init a maintainer journal in a project.                                                    |
 | [`productionize`](skills/productionize/SKILL.md)                           | Master skill that routes to the right path (audit, architecture-deepen, plan, execute, reconcile), grilling you one question at a time when intent is unclear. Runs a vetted parallel audit, applies an architecture-deepening lens, writes self-contained executable plans, and closes the loop — with mandatory approval before edits. | Want to make a prototype production-ready, audit a repo, remove AI slop, clean up tech debt, deepen architecture, or "productionize" a codebase. |
+| [`god-review`](skills/god-review/SKILL.md) | GOD-tier review of the current branch's diff: fans out parallel specialist reviewer personas (correctness, security, performance, architecture-depth, maintainability, tests, concurrency, observability, i18n, a11y, git-history, and more), gates findings on anchored 0–100 confidence, promotes cross-reviewer agreement, validates each survivor independently, then emits a ranked report with a provable coverage ledger and a merge verdict. | Want a deep, exhaustive, "miss nothing" code review — a strict maintainability + security + architecture audit of a diff, or a thermo-nuclear review of the current branch/PR before merge. |
 | [`retroactive-commit-history`](skills/retroactive-commit-history/SKILL.md) | Splits a batch of changes into smaller, meaningful commits with realistic dates and author attribution.                                                                                                                                                                                                                                  | Need to retrofit git history, backdate or future-date commits, or build a natural commit timeline from uncommitted work.                         |
 
 ---
@@ -193,6 +194,22 @@ Audit and plan paths never modify source; executors edit only in disposable work
 - Execute + reconcile loops: [`references/execute.md`](skills/productionize/references/execute.md)
 - Interview questions: [`references/interview.md`](skills/productionize/references/interview.md)
 
+### God review
+
+The most thorough code review a single command can run. Reviews the **current branch's diff** by fanning out one specialist reviewer per dimension, then surviving only what an independent validator can re-confirm — output is a ranked report that **proves what it checked**, not a wall of nitpicks. It fuses four lenses: structured persona fan-out (`/code-review`, `ce-code-review`), attacker-mindset security (`ce-security-reviewer`, `/security-review`), architecture-depth (`improve-codebase-architecture`), and ambitious maintainability "code judo" (thermo-nuclear).
+
+**Pipeline:** scope (merge-base diff, tiered) → dispatch (always-on + warranted conditional + gap-dimension personas, in parallel) → collect (structured findings) → merge (fingerprint/dedup, cross-reviewer promotion, **late** confidence gate keeping `P0@50+`) → validate (one independent validator per survivor) → report (ranked P0–P3 tables + Coverage Ledger + Verdict).
+
+**Modes:** `report` (default, read-only) · `--comment` (post findings on the PR via `gh`) · `--fix` (apply only `safe_auto` findings, then stop and ask — never commits).
+
+- Skill: [`skills/god-review/SKILL.md`](skills/god-review/SKILL.md)
+- Diff scoping + base resolution + tiers: [`references/diff-scope.md`](skills/god-review/references/diff-scope.md)
+- Persona roster + hunt-lists + "what NOT to flag": [`references/personas.md`](skills/god-review/references/personas.md)
+- Anchored confidence, merge/dedup, validator pass: [`references/confidence.md`](skills/god-review/references/confidence.md)
+- Attacker-mindset security lens: [`references/security-lens.md`](skills/god-review/references/security-lens.md)
+- Architecture-depth + thermo-nuclear lens: [`references/architecture-lens.md`](skills/god-review/references/architecture-lens.md)
+- Output: ranked tables + Coverage Ledger + Verdict: [`references/output.md`](skills/god-review/references/output.md)
+
 ### Retroactive commit history
 
 Split existing or new code into multiple smaller, meaningful commits with realistic dates and author attribution.
@@ -229,6 +246,15 @@ skills/
       plans.md
       execute.md
       interview.md
+  god-review/
+    SKILL.md
+    references/
+      diff-scope.md
+      personas.md
+      confidence.md
+      security-lens.md
+      architecture-lens.md
+      output.md
   retroactive-commit-history/
     SKILL.md
     references/
