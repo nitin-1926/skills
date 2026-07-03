@@ -13,6 +13,7 @@ Each skill lives in its own folder under `skills/` with a `SKILL.md` entry point
 | [`setup-devlog`](skills/setup-devlog/SKILL.md)                             | One-shot, idempotent setup of `DEVLOG.md` plus CLAUDE.md/AGENTS.md discipline so agents log decisions and tradeoffs in the same session as each change.                                                                                                                                                                                  | Want to "set up devlog", start tracking decisions, or init a maintainer journal in a project.                                                    |
 | [`productionize`](skills/productionize/SKILL.md)                           | Master skill that routes to the right path (audit, architecture-deepen, plan, execute, reconcile), grilling you one question at a time when intent is unclear. Runs a vetted parallel audit, applies an architecture-deepening lens, writes self-contained executable plans, and closes the loop — with mandatory approval before edits. | Want to make a prototype production-ready, audit a repo, remove AI slop, clean up tech debt, deepen architecture, or "productionize" a codebase. |
 | [`god-review`](skills/god-review/SKILL.md) | GOD-tier review of the current branch's diff: fans out parallel specialist reviewer personas (correctness, security, performance, architecture-depth, maintainability, tests, concurrency, observability, i18n, a11y, git-history, and more), gates findings on anchored 0–100 confidence, promotes cross-reviewer agreement, validates each survivor independently, then emits a ranked report with a provable coverage ledger and a merge verdict. | Want a deep, exhaustive, "miss nothing" code review — a strict maintainability + security + architecture audit of a diff, or a thermo-nuclear review of the current branch/PR before merge. |
+| [`claude-code-backend`](skills/claude-code-backend/SKILL.md) | Wire the `claude` CLI into an app as an agentic backend (spawn `claude -p` as a headless worker per task instead of calling an LLM API directly). Routes explain → plan → scaffold: distills the portable gold-standard invariants from the rocketium-nexus architecture (dumb HTTP spawner + watchdog, layered system prompt, deny-by-default tools/MCP/skills, model-proposes/code-disposes write path, run-tracking rows), detects the target stack, and scaffolds a minimal core spine with opt-in advanced layers. | Want Claude Code as a backend / an agent runtime, to run the claude CLI server-side per request, or to build an autonomous-agent platform instead of normal API configuration. |
 | [`retroactive-commit-history`](skills/retroactive-commit-history/SKILL.md) | Splits a batch of changes into smaller, meaningful commits with realistic dates and author attribution.                                                                                                                                                                                                                                  | Need to retrofit git history, backdate or future-date commits, or build a natural commit timeline from uncommitted work.                         |
 
 ---
@@ -210,6 +211,24 @@ The most thorough code review a single command can run. Reviews the **current br
 - Architecture-depth + thermo-nuclear lens: [`references/architecture-lens.md`](skills/god-review/references/architecture-lens.md)
 - Output: ranked tables + Coverage Ledger + Verdict: [`references/output.md`](skills/god-review/references/output.md)
 
+### Claude Code as a backend
+
+Stand up an architecture where the **`claude` CLI is your backend worker** — spawned headless (`claude -p`, prompt piped via stdin) once per task — instead of calling an LLM API with a hand-built prompt+tools loop. The gold standard is the **rocketium-nexus** architecture; this skill distills it into portable invariants and maps them onto whatever stack the target project already uses.
+
+**Routes explain → plan → scaffold** (productionize-style, with an approval gate before any source is written): confirm the pattern fits → detect the stack → map each core invariant to a concrete file → scaffold the minimal core spine → verify a real `claude -p` run lands validated state end-to-end.
+
+**The portable invariants (the spine):** ① CLI-as-backend, not SDK · ② the server is a dumb spawner (+ watchdog) · ③ one deterministically layered system prompt · ④ deny-by-default tools/MCP/skills, resolved per run · ⑤ **model proposes, deterministic code disposes** (the model writes a file; one validating, tenant-stamping path is the only write) · ⑥ every run is a tracked row · ⑦ retry/locking live above the worker · ⑧ auth is the CLI's own login. Scheduling, workflow DAG handoff, the review/approval gate, a learning loop, multi-tenant workspaces, and a dashboard are **opt-in advanced layers**.
+
+- Skill: [`skills/claude-code-backend/SKILL.md`](skills/claude-code-backend/SKILL.md)
+- The portable invariants, in depth: [`references/invariants.md`](skills/claude-code-backend/references/invariants.md)
+- Invoking `claude -p` (flags, stdin, auth, model, timeout): [`references/cli-invocation.md`](skills/claude-code-backend/references/cli-invocation.md)
+- The dumb-spawner runner + watchdog + retry: [`references/runner.md`](skills/claude-code-backend/references/runner.md)
+- Agent contract + layered prompt + run tracking: [`references/agent-contract.md`](skills/claude-code-backend/references/agent-contract.md)
+- Model-proposes / code-disposes write path: [`references/state-and-output.md`](skills/claude-code-backend/references/state-and-output.md)
+- Deny-by-default tools / MCP / skills + secrets: [`references/capabilities.md`](skills/claude-code-backend/references/capabilities.md)
+- Opt-in advanced layers: [`references/advanced.md`](skills/claude-code-backend/references/advanced.md)
+- Stack detection + scaffold procedure + verification: [`references/scaffold.md`](skills/claude-code-backend/references/scaffold.md)
+
 ### Retroactive commit history
 
 Split existing or new code into multiple smaller, meaningful commits with realistic dates and author attribution.
@@ -255,6 +274,17 @@ skills/
       security-lens.md
       architecture-lens.md
       output.md
+  claude-code-backend/
+    SKILL.md
+    references/
+      invariants.md
+      cli-invocation.md
+      runner.md
+      agent-contract.md
+      state-and-output.md
+      capabilities.md
+      advanced.md
+      scaffold.md
   retroactive-commit-history/
     SKILL.md
     references/
