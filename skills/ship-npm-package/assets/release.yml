@@ -1,0 +1,121 @@
+# .github/workflows/release.yml
+# Fires on a v* tag. Stages the release via trusted publishing (OIDC), so a
+# maintainer approves it with 2FA before anyone can install it.
+#
+# TEMPLATE: adjust the node version, package name, and script names.
+#
+# WHY STAGE INSTEAD OF PUBLISH:
+#   • No long-lived npm token exists anywhere. Nothing to leak or rotate.
+#   • Provenance is generated automatically (only possible from a cloud runner
+#     with an OIDC token — a local `npm publish` cannot produce it).
+#   • A compromised workflow can only STAGE. Shipping needs a human with 2FA.
+#   • Survives npm's deprecation of 2FA-bypass tokens (degraded Aug 2026,
+#     publishing removed Jan 2027).
+#
+# Requires a trusted publisher configured at:
+#   npmjs.com → <package> → Settings → Trusted Publisher
+#   → GitHub Actions, this repo, workflow filename `release.yml`
+#   → Allowed actions: `npm stage publish` only
+#
+# For direct publishing without the approval gate, use `npm publish` below and
+# allow that action on the trusted publisher instead. You lose the human gate;
+# you keep provenance and the absence of tokens.
+
+name: Release
+
+on:
+    push:
+        tags: ['v*']
+
+jobs:
+    stage:
+        name: Stage the release on npm
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            id-token: write # Required for OIDC. Without it there is no trusted publishing.
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  registry-url: https://registry.npmjs.org
+
+            # --ignore-scripts because this job holds `id-token: write`: a
+            # postinstall in any transitive devDependency could otherwise read
+            # ACTIONS_ID_TOKEN_REQUEST_URL/_TOKEN and mint an npm publish token.
+            - run: npm ci --ignore-scripts
+
+            # npm versions are immutable. A tarball whose version disagrees with
+            # its tag cannot be corrected, only deprecated — so fail before
+            # staging, not after.
+            - name: Fail if the tag does not match package.json
+              run: |
+                  tag="${GITHUB_REF_NAME#v}"
+                  pkg=$(node -p "require('./package.json').version")
+                  if [ "$tag" != "$pkg" ]; then
+                    echo "::error::Tag v$tag does not match package.json version $pkg"
+                    exit 1
+                  fi
+
+            # A version can already be on the registry for two legitimate
+            # reasons: the bootstrap release was published locally (a brand-new
+            # package cannot use trusted publishing, because the trusted
+            # publisher lives in package settings that do not exist yet), or a
+            # tag was re-pushed after a failure further down. Staging either one
+            # fails on an immutable-version error, so detect it and skip
+            # straight to cutting the GitHub release.
+            - name: Is this version already published?
+              id: published
+              run: |
+                  pkg=$(node -p "require('./package.json').name")
+                  ver=$(node -p "require('./package.json').version")
+                  if [ "$(npm view "$pkg@$ver" version 2>/dev/null)" = "$ver" ]; then
+                    echo "already=true" >> "$GITHUB_OUTPUT"
+                    echo "::notice::$pkg@$ver is already on npm — skipping the staging step."
+                  else
+                    echo "already=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - run: npm run check
+
+            # Builds, packs and verifies the real tarball — the same gate CI runs on
+            # every PR. No separate build step: this does it, and so does
+            # prepublishOnly, so a third build would just cost time.
+            - run: npm run smoke
+
+            # Provenance is automatic here — do not add --provenance.
+            - name: Stage the package
+              if: steps.published.outputs.already != 'true'
+              run: npm stage publish
+
+            - name: Explain what happens next
+              if: steps.published.outputs.already != 'true'
+              run: |
+                  {
+                    echo "### Staged, awaiting approval"
+                    echo ""
+                    echo "Nothing is installable yet. Approve with 2FA from your own machine:"
+                    echo ""
+                    echo '```bash'
+                    echo "npm stage list PACKAGE_NAME"
+                    echo "npm stage approve <stage-id>"
+                    echo '```'
+                    echo ""
+                    echo "Or approve on npmjs.com. To discard: \`npm stage reject <stage-id>\`."
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            # Idempotent: the documented recovery for a failed release is to
+            # delete and re-push the tag, and a bare `create` then fails with
+            # "release already exists" and reddens an otherwise-fine run.
+            - name: Create the GitHub release
+              run: |
+                  gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 && exit 0
+                  gh release create "$GITHUB_REF_NAME" \
+                    --title "$GITHUB_REF_NAME" \
+                    --notes "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md).
+
+                  The npm package for this tag is **staged, pending maintainer approval**."
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
