@@ -37,10 +37,17 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            # NO `registry-url:` here, deliberately. Setting it makes setup-node
+            # write a temp .npmrc containing
+            #   //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+            # point NPM_CONFIG_USERCONFIG at it, and export the placeholder
+            # NODE_AUTH_TOKEN=XXXXX-XXXXX-XXXXX-XXXXX. npm sends that literal
+            # string and gets a 401 — the explicit token overrides the OIDC
+            # exchange trusted publishing depends on. Provenance still signs, so
+            # the failure looks like a registry problem rather than a config one.
             - uses: actions/setup-node@v4
               with:
                   node-version: '22'
-                  registry-url: https://registry.npmjs.org
 
             # --ignore-scripts because this job holds `id-token: write`: a
             # postinstall in any transitive devDependency could otherwise read
@@ -95,6 +102,17 @@ jobs:
             # every PR. No separate build step: this does it, and so does
             # prepublishOnly, so a third build would just cost time.
             - run: npm run smoke
+
+            # Turns a confusing "E401 invalid token" into a message naming the
+            # cause. Any explicit _authToken in scope overrides OIDC.
+            - name: Assert nothing is shadowing the OIDC exchange
+              run: |
+                  token="$(npm config get //registry.npmjs.org/:_authToken 2>/dev/null || true)"
+                  case "$token" in
+                    ''|undefined|null) echo "No explicit auth token configured — OIDC will be used." ;;
+                    *) echo "::error::An npm _authToken is configured; it overrides trusted publishing."
+                       exit 1 ;;
+                  esac
 
             # Provenance is automatic here — do not add --provenance.
             - name: Stage the package

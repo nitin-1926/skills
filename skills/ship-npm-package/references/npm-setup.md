@@ -41,6 +41,15 @@ Commands: `npm stage publish` · `list` · `view` · `approve` · `reject` · `d
 
 > The CI runner is the trap here. `actions/setup-node` with `node-version: '22'` ships **npm 10.9**, so staging fails with `Unknown command: "stage"` even though it works on your machine. The release workflow installs `npm@^11` explicitly and asserts the subcommand exists before the release depends on it.
 
+## Two ways to break trusted publishing
+
+Both produce a **401 that looks like a registry problem**, because npm signs the provenance statement *first* (the OIDC token is fine) and only fails on the upload.
+
+1. **`registry-url` on `actions/setup-node`.** It writes a temp `.npmrc` with `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`, points `NPM_CONFIG_USERCONFIG` at it, and exports the placeholder `NODE_AUTH_TOKEN=XXXXX-XXXXX-XXXXX-XXXXX`. npm sends that literal string. **Omit `registry-url` entirely** — registry.npmjs.org is the default.
+2. **A stale `_authToken` anywhere in npm's config cascade** — including a project-level `.npmrc`, which outranks `~/.npmrc`. The same trap bites locally: `npm login` succeeds, `npm whoami` still 401s inside that directory.
+
+The release template asserts no explicit `_authToken` is configured before staging, so this fails with a message that names the cause.
+
 ## Setup
 
 ### 1. First publish — manual, once
