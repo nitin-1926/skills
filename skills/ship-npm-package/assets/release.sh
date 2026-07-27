@@ -92,6 +92,9 @@ EOF
 [[ $# -eq 0 ]] && { usage; exit 1; }
 
 BUMP=""; DRY_RUN=0; SKIP_TESTS=0; ALLOW_DIRTY=0; AUTO_STASH=0; ASSUME_YES=0; LOCAL_PUBLISH=0
+# UTC stamp taken immediately before the tag push, so the run watcher can tell
+# our run apart from an earlier run on the same commit. See push_all.
+PUSH_STARTED_AT=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -331,6 +334,12 @@ push_all() {
   # a local commit plus tag that block every re-run.
   git push origin "$DEFAULT_BRANCH" || { warn "undo: git tag -d $tag && git reset --hard origin/$DEFAULT_BRANCH"; fatal "could not push $DEFAULT_BRANCH"; }
   ok "pushed $DEFAULT_BRANCH"
+  # Stamped before the push that triggers the workflow. The documented recovery
+  # for a failed release is to delete and re-push the tag, which produces
+  # several runs sharing one commit - so the SHA alone cannot identify ours.
+  # 60 seconds of slack absorbs clock skew. GNU date first, BSD/macOS second.
+  PUSH_STARTED_AT="$(date -u -d '-60 seconds' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
+    || date -u -v-60S +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || true)"
   git push origin "$tag" || { warn "undo: git tag -d $tag"; fatal "could not push $tag"; }
   ok "pushed $tag — CI takes over from here"
 }
@@ -377,14 +386,27 @@ wait_for_staged_release() {
   info "the tag push triggers '$RELEASE_WORKFLOW', which stages the package via OIDC"
   sleep 5
 
-  # Poll for the run belonging to THIS commit. A flat `--limit 1` returned the
+  # Poll for the run belonging to THIS push. A flat `--limit 1` returned the
   # PREVIOUS release's run whenever GitHub had not created ours yet, so
   # `gh run watch` exited 0 instantly and reported a success that never happened.
+  #
+  # Matching on headSha alone is not enough either. Deleting and re-pushing a
+  # tag is the documented recovery, and it re-points the tag at the SAME commit
+  # - so a stale, already-failed run matches immediately and the loop breaks on
+  # it before our run is even created. That inverts the outcome: it reports a
+  # failure for a release that in fact succeeded. Require the run to have been
+  # created after the push, so nothing that predates it can match.
   local head_sha run_id=''
   head_sha="$(git rev-parse HEAD)"
+  local since="${PUSH_STARTED_AT:-}"
+  if [[ -z "$since" ]]; then
+    warn "no push timestamp recorded; falling back to matching on commit alone"
+    since="0000"  # sorts before every ISO-8601 stamp, so the filter is a no-op
+  fi
   for _ in $(seq 1 30); do
-    run_id="$(gh run list --workflow="$RELEASE_WORKFLOW" --limit 10 \
-      --json databaseId,headSha --jq "[.[] | select(.headSha==\"$head_sha\")][0].databaseId" 2>/dev/null || true)"
+    run_id="$(gh run list --workflow="$RELEASE_WORKFLOW" --limit 20 \
+      --json databaseId,headSha,createdAt \
+      --jq "[.[] | select(.headSha==\"$head_sha\" and .createdAt >= \"$since\")][0].databaseId" 2>/dev/null || true)"
     [[ -n "$run_id" && "$run_id" != "null" ]] && break
     sleep 5
   done
