@@ -26,7 +26,12 @@ jobs:
             fail-fast: false
             matrix:
                 # Match the floor declared in package.json "engines".
-                node: ['18', '20', '22']
+                # Node 18 is end-of-life (April 2025) and keeps
+                # `globalThis.crypto` behind --experimental-global-webcrypto -
+                # it was only unflagged in Node 19. Any package touching
+                # WebCrypto passes locally and fails here. Keep `engines` in
+                # package.json in step with this list.
+                node: ['20', '22', '24']
         steps:
             - uses: actions/checkout@v4
 
