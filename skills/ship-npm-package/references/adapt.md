@@ -31,6 +31,13 @@ Then:
 
 ```bash
 chmod +x scripts/release.sh scripts/smoke-test.sh
+# chmod alone is NOT enough. Git stores the exec bit itself, and a file already
+# committed as 100644 stays 100644 no matter what the local filesystem says - so
+# the scripts land un-executable on the CI runner and the "Scripts are
+# executable" gate fails on a tree that works fine locally.
+git update-index --chmod=+x scripts/release.sh scripts/smoke-test.sh
+git ls-files -s scripts/          # both must read 100755, not 100644
+
 npm run release patch -- --dry-run    # must stop before mutating anything
 ```
 
