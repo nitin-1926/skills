@@ -344,12 +344,46 @@ push_all() {
   ok "pushed $tag — CI takes over from here"
 }
 
+# Asks the registry about ONE version.
+#
+# Deliberately not `npm view`. Every `npm view` fetches the package's full
+# packument, and that document is served through a CDN that has been observed
+# holding a stale copy for the better part of an hour after a publish. A version
+# can therefore be genuinely live while `npm view` still reports the previous
+# one - which makes confirm_live poll to its timeout and warn about a release
+# that already succeeded. The per-version endpoint is not cached alongside the
+# packument and answers correctly straight away.
+registry_has_version() {
+  local pkg="$1" ver="$2" registry code
+  registry="$(npm config get registry 2>/dev/null || true)"
+  [[ -z "$registry" || "$registry" == "undefined" ]] && registry='https://registry.npmjs.org/'
+  registry="${registry%/}"
+
+  if command -v curl >/dev/null 2>&1; then
+    code="$(curl -fsS -o /dev/null -w '%{http_code}' "$registry/$pkg/$ver" 2>/dev/null || true)"
+    [[ "$code" == "200" ]] && return 0
+    return 1
+  fi
+  # No curl: fall back to npm view and accept that a stale packument can make
+  # this return a false negative.
+  [[ "$(npm view "$pkg@$ver" version 2>/dev/null || true)" == "$ver" ]]
+}
+
 confirm_live() {
   local new="$1" elapsed=0
   info "polling the npm registry (timeout: ${RELEASE_WAIT_TIMEOUT}s)..."
   while (( elapsed < RELEASE_WAIT_TIMEOUT )); do
-    if [[ "$(npm view "$NPM_PACKAGE@$new" version 2>/dev/null || true)" == "$new" ]]; then
-      echo; ok "npm confirms $NPM_PACKAGE@$new is live"; return 0
+    if registry_has_version "$NPM_PACKAGE" "$new"; then
+      echo; ok "npm confirms $NPM_PACKAGE@$new is live"
+      # The version exists, but `npm install` resolves through the packument.
+      # While that is still stale, installs of this version fail with ETARGET
+      # even though nothing is wrong - say so rather than let it look broken.
+      if [[ "$(npm view "$NPM_PACKAGE" version 2>/dev/null || true)" != "$new" ]]; then
+        warn "the cached packument still lists an older version as latest"
+        info "'npm install $NPM_PACKAGE@$new' may fail with ETARGET for a few more minutes"
+        info "nothing to fix - do NOT re-publish or re-push the tag while this is true"
+      fi
+      return 0
     fi
     sleep 10; elapsed=$((elapsed + 10)); printf '.'
   done

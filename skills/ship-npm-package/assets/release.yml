@@ -84,12 +84,21 @@ jobs:
             # tag was re-pushed after a failure further down. Staging either one
             # fails on an immutable-version error, so detect it and skip
             # straight to cutting the GitHub release.
+            #
+            # Asked via the per-version endpoint rather than `npm view`. Every
+            # `npm view` fetches the full packument, which is served through a
+            # CDN that has been seen holding a stale copy for the better part of
+            # an hour after a publish. Using it here would report an
+            # already-published version as absent, stage it again, and fail on
+            # an immutable-version error.
             - name: Is this version already published?
               id: published
               run: |
                   pkg=$(node -p "require('./package.json').name")
                   ver=$(node -p "require('./package.json').version")
-                  if [ "$(npm view "$pkg@$ver" version 2>/dev/null)" = "$ver" ]; then
+                  code=$(curl -fsS -o /dev/null -w '%{http_code}' \
+                    "https://registry.npmjs.org/$pkg/$ver" 2>/dev/null || true)
+                  if [ "$code" = "200" ]; then
                     echo "already=true" >> "$GITHUB_OUTPUT"
                     echo "::notice::$pkg@$ver is already on npm — skipping the staging step."
                   else
