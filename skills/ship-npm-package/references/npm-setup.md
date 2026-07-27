@@ -37,7 +37,9 @@ CI (OIDC, no token)          You (2FA device)              Registry
 - Until approved, nothing is installable. A compromised workflow can stage a malicious version; it cannot ship one.
 - Provenance is generated automatically when staging via trusted publishing from a public repo — do not pass `--provenance`.
 
-Commands: `npm stage publish` · `list` · `view` · `approve` · `reject` · `download`. Requires npm 11+ (`npm stage --help` to check).
+Commands: `npm stage publish` · `list` · `view` · `approve` · `reject` · `download`. **Requires npm 11+** — check with `npm stage --help`.
+
+> The CI runner is the trap here. `actions/setup-node` with `node-version: '22'` ships **npm 10.9**, so staging fails with `Unknown command: "stage"` even though it works on your machine. The release workflow installs `npm@^11` explicitly and asserts the subcommand exists before the release depends on it.
 
 ## Setup
 

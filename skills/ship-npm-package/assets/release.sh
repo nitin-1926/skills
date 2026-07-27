@@ -227,13 +227,17 @@ preflight() {
 
   # Approving a staged version, and publishing locally, both need an interactive
   # npm session. CI needs no token: it authenticates with a short-lived OIDC token.
+  # Hard failure, not a warning. The flow ends in `npm stage approve`, which
+  # needs an authenticated session - warning here lets a release tag, push and
+  # stage, then strand with no way to finish it.
   local npm_user
   if npm_user="$(npm whoami 2>/dev/null)"; then
     ok "npm logged in as $npm_user"
-  elif [[ "$LOCAL_PUBLISH" == "1" ]]; then
-    fatal "not logged in to npm — run 'npm login'"
   else
-    warn "not logged in to npm — you will need 'npm login' to approve the staged version"
+    warn "a stale token in ~/.npmrc is sent and rejected before any prompt appears,"
+    warn "so 'npm login' can look like it worked while 'npm whoami' still 401s. If so:"
+    warn "  npm config delete //registry.npmjs.org/:_authToken && npm login"
+    fatal "not logged in to npm — 'npm whoami' failed"
   fi
 
   [[ -f package.json ]] || fatal "missing package.json"

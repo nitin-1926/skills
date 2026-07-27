@@ -45,6 +45,17 @@ jobs:
             # --ignore-scripts because this job holds `id-token: write`: a
             # postinstall in any transitive devDependency could otherwise read
             # ACTIONS_ID_TOKEN_REQUEST_URL/_TOKEN and mint an npm publish token.
+            # `npm stage` landed in npm 11, and the Node 22 runner image still
+            # bundles npm 10.9 — so without this, staging fails with
+            # `Unknown command: "stage"`. Pin the major rather than relying on
+            # whatever npm the Node image happens to ship.
+            - name: Install an npm that has `npm stage`
+              run: |
+                  npm install -g npm@^11
+                  npm --version
+                  npm stage --help >/dev/null 2>&1 \
+                    || { echo "::error::this npm has no 'stage' subcommand"; exit 1; }
+
             - run: npm ci --ignore-scripts
 
             # npm versions are immutable. A tarball whose version disagrees with
