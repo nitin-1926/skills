@@ -16,6 +16,7 @@ Each skill lives in its own folder under `skills/` with a `SKILL.md` entry point
 | [`claude-code-backend`](skills/claude-code-backend/SKILL.md) | Wire the `claude` CLI into an app as an agentic backend (spawn `claude -p` as a headless worker per task instead of calling an LLM API directly). Routes explain → plan → scaffold: distills the portable gold-standard invariants from the rocketium-nexus architecture (dumb HTTP spawner + watchdog, layered system prompt, deny-by-default tools/MCP/skills, model-proposes/code-disposes write path, run-tracking rows), detects the target stack, and scaffolds a minimal core spine with opt-in advanced layers. | Want Claude Code as a backend / an agent runtime, to run the claude CLI server-side per request, or to build an autonomous-agent platform instead of normal API configuration. |
 | [`retroactive-commit-history`](skills/retroactive-commit-history/SKILL.md) | Splits a batch of changes into smaller, meaningful commits with realistic dates and author attribution.                                                                                                                                                                                                                                  | Need to retrofit git history, backdate or future-date commits, or build a natural commit timeline from uncommitted work.                         |
 | [`ship-npm-package`](skills/ship-npm-package/SKILL.md) | Sets up one-command, verifiable release automation for an npm package: a preflight-gated `release.sh`, a smoke test that installs the real packed tarball into a throwaway consumer (catching broken `exports` maps, missing types, and bloated `files` globs that unit tests structurally cannot), and CI + tag-triggered publish workflows with npm provenance. | Want to "set up publishing", make a package publishable, automate `npm publish`, add a release script, or turn a hand-rolled publish ritual into something repeatable. |
+| [`nextjs-app-fast`](skills/nextjs-app-fast/SKILL.md) | Diagnoses and fixes Next.js App Router performance when the slowness is or isn't in the React — distribution-first measurement, latency attribution, bounded concurrency, payload pagination, platform walls, geography, perceived performance, and silent-failure design (field-tested on a production Amplify + Prisma + Supabase CRM). | Want to make a Next.js app fast, chase p99/timeouts, fix slow directories or cron hangs, cut TTFB, or improve Core Web Vitals without guessing at the median. |
 
 ---
 
@@ -238,6 +239,21 @@ Split existing or new code into multiple smaller, meaningful commits with realis
 - Reference: [`references/reference.md`](skills/retroactive-commit-history/references/reference.md)
 - Examples: [`references/examples.md`](skills/retroactive-commit-history/references/examples.md)
 
+### Next.js app-fast
+
+Diagnostic-first performance skill for Next.js App Router when the slowness may not be in the React. Measures the distribution before optimising, attributes latency when host logs have no route, bounds concurrency across a region, respects observed platform walls, paginates payloads without lying client-side, and designs out silent "green but did nothing" failures. Spine is a measured production field record (Amplify SSR, Prisma, Supabase, sync jobs, ~135k-row CRM); playbooks cover instrument → fan-out → counts → payload → jobs → geography → perceived/mobile → React/Next best-of.
+
+**Workflow:** diagnose (p50/p90/p99, attribution, tail owner, platform wall) → classify → one playbook → verify same-env before/after + silent-failure check. Does not start with `memo` or a denormalised column.
+
+- Skill: [`skills/nextjs-app-fast/SKILL.md`](skills/nextjs-app-fast/SKILL.md)
+- Field record: [`references/field-record.md`](skills/nextjs-app-fast/references/field-record.md)
+- Playbooks: [`references/playbooks.md`](skills/nextjs-app-fast/references/playbooks.md)
+
+```bash
+npx skills add nitin-1926/skills --skill nextjs-app-fast -g -y
+# In target repo: "make this Next.js app fast" or attach @nextjs-app-fast
+```
+
 ---
 
 ## Repository layout
@@ -291,6 +307,23 @@ skills/
     references/
       reference.md
       examples.md
+  ship-npm-package/
+    SKILL.md
+    references/
+      recon.md
+      adapt.md
+      npm-setup.md
+      manifest.md
+    assets/
+      release.sh
+      smoke-test.sh
+      ci.yml
+      release.yml
+  nextjs-app-fast/
+    SKILL.md
+    references/
+      field-record.md
+      playbooks.md
 ```
 
 To add a skill to this collection: create `skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description`, optional `metadata`), add reference files under `references/` if needed, and update this README's catalog and layout sections.
